@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { ReceiptItem } from "@/type/ReceiptItem";
+import { ReceiptItem } from "@/lib/types/ReceiptItem";
 import { ArrowLeft, Plus } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -24,9 +24,8 @@ export default function ProcessPage() {
     const img = sessionStorage.getItem("uploadedReceipt");
     const name = sessionStorage.getItem("uploadedReceiptName");
     const extracted = sessionStorage.getItem("extractedItems");
-    const subtotal = sessionStorage.getItem("subtotal");
     const pajak = sessionStorage.getItem("pajak");
-    const total = sessionStorage.getItem("total");
+    const totalFromLLM = sessionStorage.getItem("total"); // 👈 simpan terpisah
 
     if (!img || !name || !extracted) {
       router.push("/");
@@ -50,6 +49,11 @@ export default function ProcessPage() {
 
     setTax(pajak ? Number(pajak) : 0);
     setServiceCharge(0);
+
+    // simpan total asli dari LLM (biar ga ketiban perhitungan manual)
+    if (totalFromLLM) {
+      sessionStorage.setItem("processedTotal", totalFromLLM);
+    }
 
     setIsProcessing(false);
   }, [router]);
@@ -110,13 +114,16 @@ export default function ProcessPage() {
     (sum, item) => sum + item.price * item.quantity,
     0
   );
-  const total = subtotal + tax + serviceCharge;
+  const calculatedTotal = subtotal + tax + serviceCharge;
 
   const handleContinue = () => {
+    const storedTotal = sessionStorage.getItem("processedTotal");
+    const finalTotal = storedTotal ? Number(storedTotal) : calculatedTotal;
+
     sessionStorage.setItem("processedItems", JSON.stringify(items));
     sessionStorage.setItem(
       "receiptTotals",
-      JSON.stringify({ subtotal, tax, serviceCharge, total })
+      JSON.stringify({ subtotal, tax, serviceCharge, total: finalTotal })
     );
     router.push("/friends");
   };
@@ -133,7 +140,7 @@ export default function ProcessPage() {
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-secondary/20">
       <div className="container mx-auto px-4 py-6">
         <div className="flex items-center gap-4 mb-6">
-          <Button variant="ghost" size="icon" onClick={() => router.back()}>
+          <Button variant="white" size="icon" onClick={() => router.back()}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div>
@@ -187,7 +194,7 @@ export default function ProcessPage() {
                 ))}
 
                 <Button
-                  variant="outline"
+                  variant="white"
                   className="w-full bg-transparent"
                   onClick={handleAddItem}
                 >
@@ -222,12 +229,16 @@ export default function ProcessPage() {
                   <div className="flex justify-between font-semibold">
                     <span className="text-foreground">Total</span>
                     <span className="text-foreground">
-                      Rp {total.toLocaleString("id-ID")}
+                      Rp {calculatedTotal.toLocaleString("id-ID")}
                     </span>
                   </div>
                 </div>
 
-                <Button className="w-full mt-6" onClick={handleContinue}>
+                <Button
+                  variant={"white"}
+                  className="w-full mt-6"
+                  onClick={handleContinue}
+                >
                   Lanjut ke Pembagian Teman
                 </Button>
               </div>

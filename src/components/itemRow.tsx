@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ItemRowProps } from "@/type/ItemRow";
+import { ItemRowProps } from "@/lib/types/ItemRow";
 import { Check, Edit2, X } from "lucide-react";
 import { useState } from "react";
 
@@ -65,10 +65,10 @@ export default function ItemRow({
           </div>
         </div>
         <div className="flex gap-2">
-          <Button size="sm" onClick={handleSave}>
+          <Button size="sm" variant="white" className="w-10" onClick={handleSave}>
             <Check className="w-4 h-4" />
           </Button>
-          <Button size="sm" variant="outline" onClick={onCancel}>
+          <Button size="sm" variant="white" className="w-10" onClick={onCancel}>
             <X className="w-4 h-4" />
           </Button>
         </div>
@@ -86,10 +86,10 @@ export default function ItemRow({
         </div>
       </div>
       <div className="flex gap-2">
-        <Button size="sm" variant="ghost" onClick={onEdit}>
+        <Button size="sm" variant="white" className="w-10" onClick={onEdit}>
           <Edit2 className="w-4 h-4" />
         </Button>
-        <Button size="sm" variant="ghost" onClick={onDelete}>
+        <Button size="sm" variant="white" className="w-10" onClick={onDelete}>
           <X className="w-4 h-4" />
         </Button>
       </div>

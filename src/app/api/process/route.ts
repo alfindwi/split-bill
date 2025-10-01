@@ -43,7 +43,7 @@ export async function POST(req: Request) {
 
 Aturan:
 1. Jawab HANYA dengan JSON object yang valid (tanpa teks lain).
-2. Format harus seperti ini:
+2. Format:
 {
   "items": [
     { "name": "string", "price": number, "quantity": number }
@@ -52,14 +52,17 @@ Aturan:
   "pajak": number,
   "total": number
 }
-3. Jika di struk tertulis "x 2" atau (2 nama product) → itu quantity.
-4. Jika di struk harga sudah total (contoh: 20000 untuk 2 item) → hitung harga SATUAN = total dibagi quantity.
-5. Semua harga dalam format rupiah penuh (contoh: 15000, bukan 15).
-6. "subtotal" = jumlah semua (price × quantity) sebelum pajak.
-7. "pajak" = nilai pajak (PPN, PB1, VAT) yang tercantum, jika tidak ada tulis 0.
-8. "total" = subtotal + pajak.
-9. Abaikan informasi lain seperti “Tunai”, “Kembalian”, atau nomor struk.
-10. Pastikan output JSON valid tanpa ada komentar
+3. Quantity adalah angka di bagian paling kiri baris (contoh: "2 MIE GACOAN LV 4").
+4. Angka di paling kanan adalah TOTAL harga untuk semua quantity, bukan harga per item.
+5. Maka harga SATUAN = (angka total ÷ quantity).
+   - Contoh: "2 MIE GACOAN LV 4   20000" → quantity=2, price=10000.
+6. Semua harga ditulis penuh dalam rupiah tanpa titik desimal (contoh: 15000, bukan 15.000 atau 15).
+7. "subtotal" = jumlah semua (price × quantity) sebelum pajak.
+8. "pajak" = nilai pajak (PPN, PB1, VAT) yang tercantum, jika tidak ada tulis 0.
+9. "total" = subtotal + pajak.
+10. Abaikan informasi lain seperti “Tunai”, “Kembalian”, atau nomor struk.
+11. Pastikan output JSON valid tanpa ada komentar.
+
 `,
           },
           {
@@ -77,6 +80,7 @@ Aturan:
         : (result.content as string);
 
     let parsed: any = {};
+
     try {
       let cleaned = raw.trim();
       cleaned = cleaned.replace(/^```json\s*/i, "").replace(/```$/i, "");

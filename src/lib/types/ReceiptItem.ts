@@ -4,4 +4,5 @@ export interface ReceiptItem {
   price: number
   quantity: number
   isEditing?: boolean
+  assignedTo?: string[]
 }

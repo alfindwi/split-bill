@@ -20,7 +20,7 @@ export default function RootLayout({
 }) {
   const pathname = usePathname();
 
-  const hideLayout = pathname === "/process"; 
+  const hideLayout = pathname === "/process" || pathname === "/friends" || pathname === "/assign"; 
 
   return (
     <html lang="en">
