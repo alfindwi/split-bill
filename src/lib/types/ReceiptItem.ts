@@ -5,4 +5,5 @@ export interface ReceiptItem {
   quantity: number
   isEditing?: boolean
   assignedTo?: string[]
+  friendId?: string
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Friend } from "@/lib/types/friend";
 import { Item } from "@/lib/types/ItemRow";
@@ -68,13 +69,12 @@ export default function AssignItemsPage() {
     if (!item) return;
 
     const rem = remainingQuantity(item);
-    if (rem <= 0) return; // tidak boleh melebihi stock
+    if (rem <= 0) return;
 
     setAssignments((prev) => {
       const arr = prev[itemId] ? [...prev[itemId]] : [];
       const found = arr.find((x) => x.friendId === friendId);
       if (found) {
-        // batasi agar tidak lebih dari item.quantity
         if (getAssignedQuantity(itemId) < item.quantity) {
           found.quantity += 1;
         }
@@ -96,35 +96,88 @@ export default function AssignItemsPage() {
     });
   };
 
-  const confirmAssignments = () => {
+  const confirmAssignments = async () => {
     if (!items.length) return;
 
-    const total = items.reduce(
-      (sum, item) => sum + item.price * item.quantity,
-      0
-    );
+    const parsedRaw = sessionStorage.getItem("parsed");
+    let subtotal = 0;
+    let pajak = 0;
+    let total = 0;
+
+    if (parsedRaw) {
+      try {
+        const parsed = JSON.parse(parsedRaw);
+        subtotal = parsed.subtotal;
+        pajak = parsed.pajak;
+        total = subtotal + pajak;
+      } catch (err) {
+        console.error("Error parsing parsed data:", err);
+      }
+    } else {
+      subtotal = items.reduce(
+        (sum, item) => sum + item.price * item.quantity,
+        0
+      );
+      pajak = Math.round(subtotal * 0.1);
+      total = subtotal + pajak;
+    }
 
     const bills: Record<string, number> = {};
+    const friendDetails: {
+      id: string;
+      name: string;
+      image?: string;
+      items: { name: string; price: number; quantity: number }[];
+    }[] = friends.map((f) => ({ ...f, items: [] }));
 
     items.forEach((item) => {
       const assigned = assignments[item.id] || [];
       assigned.forEach((a) => {
         const cost = a.quantity * item.price;
+
         bills[a.friendId] = (bills[a.friendId] || 0) + cost;
+
+        const friend = friendDetails.find((f) => f.id === a.friendId);
+        if (friend) {
+          friend.items.push({
+            name: item.name,
+            price: item.price,
+            quantity: a.quantity,
+          });
+        }
       });
     });
 
     sessionStorage.setItem(
       "summary",
-      JSON.stringify({ total, bills, friends })
+      JSON.stringify({ subtotal, pajak, total, bills, friends: friendDetails })
     );
 
-    router.push("/receipt");
+    try {
+      const res = await fetch("api/receipt", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          total,
+          items: friendDetails,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Gagal simpan receipt");
+
+      console.log("Receipt tersimpan di Supabase:", data);
+      router.push(`/receipt/${data.id}`);
+    } catch (error) {
+      console.log(error);
+      alert("Terjadi kesalahan. Coba lagi.");
+    }
   };
 
   const allAssigned = items.every((item) => remainingQuantity(item) === 0);
 
-  console.log("assignments", assignments);
 
   return (
     <div className="min-h-screen bg-white p-6">
@@ -204,7 +257,6 @@ export default function AssignItemsPage() {
                       Remaining: <span className="font-semibold">{rem}</span>
                     </div>
 
-                    {/* Assigned friends */}
                     <div className="mt-2 flex flex-wrap gap-2">
                       {(assignments[item.id] || []).map((a) => {
                         const friend = friends.find(
@@ -219,11 +271,17 @@ export default function AssignItemsPage() {
                             }}
                             className="inline-flex items-center gap-2 px-2 py-1 bg-gray-100 rounded-full text-xs"
                           >
-                            <div
-                              className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-semibold text-white ${friend.color}`}
-                            >
-                              {friend.initials}
-                            </div>
+                            <Avatar className="w-7 h-7 ">
+                              <AvatarImage
+                                src={friend.image}
+                                className=" contained"
+                              />
+                              <AvatarFallback
+                                className={`${friend.color} text-white`}
+                              >
+                                {friend.initials}
+                              </AvatarFallback>
+                            </Avatar>
                             <span className="px-2">×{a.quantity}</span>
                           </button>
                         );

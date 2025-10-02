@@ -15,21 +15,21 @@ export default function Footer() {
 
         <div className="flex gap-3 mt-2">
           <a
-            href="https://github.com/username"
+            href="https://github.com/alfindwi"
             target="_blank"
             rel="noopener noreferrer"
           >
             <FaGithub className="text-xl text-black hover:text-black" />
           </a>
           <a
-            href="https://linkedin.com/in/username"
+            href="https://linkedin.com/in/alfin-dwi-wadani"
             target="_blank"
             rel="noopener noreferrer"
           >
             <FaLinkedin className="text-xl text-black hover:text-black" />
           </a>
           <a
-            href="https://instagram.com/username"
+            href="https://instagram.com/alvindvvi"
             target="_blank"
             rel="noopener noreferrer"
           >
