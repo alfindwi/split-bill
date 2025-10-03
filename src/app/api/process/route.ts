@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { ChatOpenAI } from "@langchain/openai";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
+import { IProcess } from "@/lib/types/process";
 
 export async function POST(req: Request) {
   try {
@@ -79,14 +80,19 @@ Aturan:
         ? result.content[0].text
         : (result.content as string);
 
-    let parsed: any = {};
+    let parsed: IProcess = {
+      items: [],
+      subtotal: 0,
+      pajak: 0,
+      total: 0,
+    };
 
     try {
       let cleaned = raw.trim();
       cleaned = cleaned.replace(/^```json\s*/i, "").replace(/```$/i, "");
 
       parsed = JSON.parse(cleaned);
-    } catch (err) {
+    } catch (error) {
       console.error("Gagal parse JSON:", raw);
     }
 

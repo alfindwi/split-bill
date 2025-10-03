@@ -24,7 +24,7 @@ export default function RootLayout({
     pathname === "/process" ||
     pathname === "/friends" ||
     pathname === "/assign" ||
-    pathname === "/receipt/[id]";
+    pathname.startsWith("/receipt");
 
   return (
     <html lang="en">

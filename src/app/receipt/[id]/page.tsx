@@ -4,16 +4,16 @@ import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabaseClient";
 import { Friend } from "@/lib/types/friend";
+import { Item } from "@/lib/types/ItemRow";
 import { ReceiptItem } from "@/lib/types/ReceiptItem";
 import { Summary } from "@/lib/types/summary";
-import { ArrowLeft } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export default function Success() {
   const params = useParams();
   const id = Array.isArray(params?.id) ? params.id[0] : params?.id;
-
+  const router = useRouter();
   const [summary, setSummary] = useState<Summary | null>(null);
 
   useEffect(() => {
@@ -34,7 +34,7 @@ export default function Success() {
       const friends: Friend[] = Array.isArray(data.items) ? data.items : [];
 
       const allItems: ReceiptItem[] = friends.flatMap((f) =>
-        f.items.map((it: any) => ({ ...it, friendId: f.id }))
+        f.items.map((it: Item) => ({ ...it, friendId: f.id }))
       );
 
       const subtotal = allItems.reduce(
@@ -120,9 +120,23 @@ export default function Success() {
             </div>
           ))}
 
-          <Button className="w-full mt-4" variant="white" onClick={handleCopyUrl}> 
-            Salin Tautan
-          </Button>
+          <div className="flex flex-col ">
+            <Button
+              className="w-full mt-4 mb-2"
+              variant="white"
+              onClick={handleCopyUrl}
+            >
+              Salin Tautan
+            </Button>
+
+            <Button
+              className="w-full"
+              variant="white"
+              onClick={() => router.push("/")}
+            >
+              Kembali ke Home
+            </Button>
+          </div>
         </div>
       </div>
     </div>

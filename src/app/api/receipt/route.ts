@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabaseClient";
 interface Receipt {
   id: string;
   total: number;
-  items: any[];
+  items: [];
   created_at: string;
 }
 
@@ -13,7 +13,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { total, items } = body as {
       total: number;
-      items: any[];
+      items: [];
     };
 
     const { data, error } = await supabase
@@ -30,7 +30,7 @@ export async function POST(req: Request) {
       id: data.id,
       message: "Receipt created successfully",
     });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error) {
+    return NextResponse.json("Error creating receipt", { status: 500 });
   }
 }

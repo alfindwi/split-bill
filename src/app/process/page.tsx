@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Item } from "@/lib/types/ItemRow";
 import { ReceiptItem } from "@/lib/types/ReceiptItem";
 import { ArrowLeft, Plus } from "lucide-react";
 import Image from "next/image";
@@ -38,9 +39,9 @@ export default function ProcessPage() {
     try {
       const parsedItems = JSON.parse(extracted);
       setItems(
-        parsedItems.map((item: any, idx: number) => ({
-          id: String(idx + 1),
+        parsedItems.map((item: Item, idx: number) => ({
           ...item,
+          id: String(idx + 1),
         }))
       );
     } catch (e) {

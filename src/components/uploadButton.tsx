@@ -1,10 +1,9 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { Button } from "./ui/button";
-import { GrGallery } from "react-icons/gr";
 import { useRouter } from "next/navigation";
-import Tesseract from "tesseract.js";
+import { useRef, useState } from "react";
+import { GrGallery } from "react-icons/gr";
+import { Button } from "./ui/button";
 
 export default function UploadButton() {
   const fileInputRef = useRef<HTMLInputElement>(null);
