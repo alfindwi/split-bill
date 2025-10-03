@@ -1,20 +1,53 @@
 "use client";
 
-import { useRef } from "react";
-import { FiCamera } from "react-icons/fi";
 import { Button } from "@/components/ui/button";
+import { useRef, useState } from "react";
+import { FiCamera } from "react-icons/fi";
 
 export default function CameraButton() {
   const cameraInputRef = useRef<HTMLInputElement>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleClick = () => {
     cameraInputRef.current?.click();
   };
 
-  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
-    if (files && files.length > 0) {
-      console.log("Foto diambil:", files[0]);
+    if (!files || files.length === 0) return;
+
+    const file = files[0];
+    setIsLoading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/process", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) throw new Error("Failed to process file");
+
+      const data = await res.json();
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        sessionStorage.setItem("uploadedReceipt", reader.result as string);
+        sessionStorage.setItem("uploadedReceiptName", file.name);
+        sessionStorage.setItem("extractedItems", JSON.stringify(data.items));
+        sessionStorage.setItem("rawText", data.raw);
+        sessionStorage.setItem("subtotal", String(data.subtotal));
+        sessionStorage.setItem("pajak", String(data.pajak));
+        sessionStorage.setItem("total", String(data.total));
+
+        window.location.href = "/process";
+      };
+      reader.readAsDataURL(file);
+    } catch (err) {
+      console.error("Upload gagal:", err);
+      setIsLoading(false);
     }
   };
 
@@ -23,14 +56,20 @@ export default function CameraButton() {
       <input
         type="file"
         accept="image/*"
-        capture="environment" 
+        capture="environment"
         ref={cameraInputRef}
         onChange={handleChange}
         style={{ display: "none" }}
       />
 
-      <Button type="button" variant="white" onClick={handleClick}>
-        <FiCamera /> Camera
+      <Button type="button" variant="white" onClick={handleClick} disabled={isLoading}>
+        {isLoading ? (
+          "Processing..."
+        ) : (
+          <>
+            <FiCamera /> Upload
+          </>
+        )}
       </Button>
     </>
   );

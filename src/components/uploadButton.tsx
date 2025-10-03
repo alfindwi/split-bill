@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { GrGallery } from "react-icons/gr";
 import { Button } from "./ui/button";
@@ -8,7 +7,6 @@ import { Button } from "./ui/button";
 export default function UploadButton() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
 
   const handleClick = () => {
     fileInputRef.current?.click();

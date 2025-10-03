@@ -25,7 +25,7 @@ export async function POST(req: Request) {
         baseURL: "https://openrouter.ai/api/v1",
         defaultHeaders: {
           Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-          "HTTP-Referer": "http://localhost:3000",
+          "HTTP-Referer": "https://splitbill-nine.vercel.app",
           "X-Title": "AI Product Extractor",
         },
       },
