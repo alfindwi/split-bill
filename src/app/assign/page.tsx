@@ -42,6 +42,7 @@ export default function AssignItemsPage() {
 
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [selectedFriendId, setSelectedFriendId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const getAssignedQuantity = (itemId: string) =>
     (assignments[itemId] || []).reduce((s, a) => s + a.quantity, 0);
@@ -104,6 +105,8 @@ export default function AssignItemsPage() {
     let pajak = 0;
     let total = 0;
 
+    setIsLoading(true);
+
     if (parsedRaw) {
       try {
         const parsed = JSON.parse(parsedRaw);
@@ -118,8 +121,7 @@ export default function AssignItemsPage() {
         (sum, item) => sum + item.price * item.quantity,
         0
       );
-      pajak = Math.round(subtotal * 0.1);
-      total = subtotal + pajak;
+      total = subtotal;
     }
 
     const bills: Record<string, number> = {};
@@ -177,7 +179,6 @@ export default function AssignItemsPage() {
   };
 
   const allAssigned = items.every((item) => remainingQuantity(item) === 0);
-
 
   return (
     <div className="min-h-screen bg-white p-6">
@@ -310,7 +311,7 @@ export default function AssignItemsPage() {
             className="w-full"
             onClick={confirmAssignments}
           >
-            Berikutnya
+            {isLoading ? "Processing..." : "Berikutnya"}
           </Button>
         </div>
       </div>
