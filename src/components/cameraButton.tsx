@@ -67,7 +67,7 @@ export default function CameraButton() {
           "Processing..."
         ) : (
           <>
-            <FiCamera /> Upload
+            <FiCamera /> Camera
           </>
         )}
       </Button>
