@@ -24,18 +24,20 @@ const avatarColors = [
 ];
 
 const avatarImages = [
-  "https://i.pinimg.com/736x/c0/4f/c6/c04fc6ae79dec526abcd17c3f57db493.jpg",
-  "https://i.pinimg.com/736x/0f/3f/a5/0f3fa5214b9cdcebe55f3979e0766fff.jpg",
-  "https://i.pinimg.com/736x/63/5f/82/635f82cbc6fde141266a6fbb401b2fda.jpg",
-  "https://i.pinimg.com/736x/8a/c6/f5/8ac6f5975dc9278865bdb41c101151c5.jpg",
-  "https://i.pinimg.com/736x/f6/6b/a1/f66ba1fa9330acf63b5d0cd45f4d4d5a.jpg",
-  "https://i.pinimg.com/736x/a7/e6/7a/a7e67a6973f29b7d0fa8a8c41c525bc4.jpg",
-  "https://i.pinimg.com/736x/56/cf/f8/56cff86e6b8cff5ce8a5cd93ea4e39c5.jpg",
-  "https://i.pinimg.com/1200x/22/19/d8/2219d841b6511a39950a754c9c9cc134.jpg",
-  "https://i.pinimg.com/1200x/69/54/7f/69547f6270b13a978adf95c50fea59b3.jpg",
-  "https://i.pinimg.com/1200x/20/68/5d/20685db2bebfb542c228a24ec3890d80.jpg",
-  "https://i.pinimg.com/736x/40/b7/6c/40b76cde9d3262b2a87150d017a59218.jpg",
-  "https://i.pinimg.com/736x/df/c0/0f/dfc00f141c46dc9686fe9111654b7727.jpg",
+  "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e5357ae7371bb53cf9ec160_peep-52.png",
+  "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e5350fb460080ed648acdc3_peep-7.png",
+  "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e535d897488c25a204b12ff_peep-102.png",
+  "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e5355338becbf1a2b523de5_peep-35.png",
+  "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e5357c58becbf70a753467d_peep-53.png",
+  "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e535b408becbf85d3544d99_peep-82.png",
+  "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e5358af8e24939dc40660de_peep-60.png",
+  "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e5359f2d39923046255369c_peep-71.png",
+  "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e535b9cd8713177a910e39b_peep-85.png",
+  "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e535b238becbfb1a454450e_peep-81.png",
+  "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e535b5e8becbf0e0b545ab7_peep-83.png",
+  "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e535ddcd3992344b6572d31_peep-105.png",
+  "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e53521c4600805ff88b3bb5_peep-16.png",
+  "https://cdn.prod.website-files.com/5e51c674258ffe10d286d30a/5e53566fc992503ea6c77af5_peep-41.png",
 ];
 
 export default function FriendsPage() {
