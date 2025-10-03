@@ -11,6 +11,7 @@ import { Friend } from "@/lib/types/friend";
 import { ArrowLeft, Plus, Users, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { Item } from "@/lib/types/ItemRow";
 
 const avatarColors = [
   "bg-red-500",
@@ -45,15 +46,25 @@ export default function FriendsPage() {
   const [newFriendName, setNewFriendName] = useState("");
   const [receiptTotal, setReceiptTotal] = useState(0);
   const [usedAvatar, setUsedAvatar] = useState<number[]>([]);
+  const [, setItems] = useState<Item[]>([]);
+
   const router = useRouter();
 
   useEffect(() => {
+    const storedItems = sessionStorage.getItem("processedItems");
     const storedTotals = sessionStorage.getItem("receiptTotals");
-    if (storedTotals) {
-      const totals = JSON.parse(storedTotals);
-      setReceiptTotal(totals.total);
-    } else {
+
+    if (!storedItems || !storedTotals) {
       router.push("/");
+      return;
+    }
+
+    try {
+      setItems(JSON.parse(storedItems));
+      const totals = JSON.parse(storedTotals);
+      setReceiptTotal(totals.total); // 🟢 sekarang pasti dapat total dari ProcessPage
+    } catch (e) {
+      console.error("Error parsing data:", e);
     }
   }, [router]);
 
@@ -113,7 +124,6 @@ export default function FriendsPage() {
   };
 
   const handleContinue = () => {
-    
     if (friends.length >= 2) {
       sessionStorage.setItem("friends", JSON.stringify(friends));
       router.push("/assign");

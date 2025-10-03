@@ -6,27 +6,41 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Item } from "@/lib/types/ItemRow";
-import { ReceiptItem } from "@/lib/types/ReceiptItem";
 import { ArrowLeft, Plus } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export default function ProcessPage() {
-  const [receiptImage, setReceiptImage] = useState<string | null>(null);
-  const [receiptName, setReceiptName] = useState<string>("");
-  const [items, setItems] = useState<ReceiptItem[]>([]);
-  const [isProcessing, setIsProcessing] = useState(true);
-  const [tax, setTax] = useState(0);
-  const [serviceCharge, setServiceCharge] = useState(0);
   const router = useRouter();
+  const [receiptImage, setReceiptImage] = useState<string | null>(null);
+  const [receiptName, setReceiptName] = useState<string | null>(null);
+  const [items, setItems] = useState<Item[]>([]);
+  const [tax, setTax] = useState<number>(0);
+  const [serviceCharge, setServiceCharge] = useState<number>(0);
+  const [isProcessing, setIsProcessing] = useState(true);
+
+  const syncSession = (updatedItems: Item[]) => {
+    const subtotal = updatedItems.reduce(
+      (sum, it) => sum + it.price * it.quantity,
+      0
+    );
+
+    const total = subtotal + tax + serviceCharge;
+
+    sessionStorage.setItem("processedItems", JSON.stringify(updatedItems));
+    sessionStorage.setItem(
+      "receiptTotals",
+      JSON.stringify({ subtotal, tax, serviceCharge, total })
+    );
+  };
 
   useEffect(() => {
     const img = sessionStorage.getItem("uploadedReceipt");
     const name = sessionStorage.getItem("uploadedReceiptName");
     const extracted = sessionStorage.getItem("extractedItems");
     const pajak = sessionStorage.getItem("pajak");
-    const totalFromLLM = sessionStorage.getItem("total"); // 👈 simpan terpisah
+    const totalFromLLM = sessionStorage.getItem("total");
 
     if (!img || !name || !extracted) {
       router.push("/");
@@ -38,22 +52,39 @@ export default function ProcessPage() {
 
     try {
       const parsedItems = JSON.parse(extracted);
-      setItems(
-        parsedItems.map((item: Item, idx: number) => ({
-          ...item,
-          id: String(idx + 1),
-        }))
+      const formattedItems = parsedItems.map((item: Item, idx: number) => ({
+        ...item,
+        id: String(idx + 1),
+      }));
+      setItems(formattedItems);
+
+      const subtotalCalc = formattedItems.reduce(
+        (s: number, it: Item) => s + it.price * it.quantity,
+        0
+      );
+
+      // 🟢 Pastikan pajak ada
+      const pajakNum = pajak ? Number(pajak) : 0;
+      setTax(pajakNum);
+      setServiceCharge(0);
+
+      const totalCalc = totalFromLLM
+        ? Number(totalFromLLM)
+        : subtotalCalc + pajakNum;
+
+      sessionStorage.setItem("pajak", pajakNum.toString());
+      sessionStorage.setItem("processedTotal", totalCalc.toString());
+      sessionStorage.setItem(
+        "parsed",
+        JSON.stringify({
+          items: formattedItems,
+          subtotal: subtotalCalc,
+          pajak: pajakNum,
+          total: totalCalc,
+        })
       );
     } catch (e) {
       console.error("Parsing items error:", e);
-    }
-
-    setTax(pajak ? Number(pajak) : 0);
-    setServiceCharge(0);
-
-    // simpan total asli dari LLM (biar ga ketiban perhitungan manual)
-    if (totalFromLLM) {
-      sessionStorage.setItem("processedTotal", totalFromLLM);
     }
 
     setIsProcessing(false);
@@ -73,19 +104,19 @@ export default function ProcessPage() {
     newPrice: number,
     newQuantity: number
   ) => {
-    setItems(
-      items.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              name: newName,
-              price: newPrice,
-              quantity: newQuantity,
-              isEditing: false,
-            }
-          : item
-      )
+    const updated = items.map((item) =>
+      item.id === id
+        ? {
+            ...item,
+            name: newName,
+            price: newPrice,
+            quantity: newQuantity,
+            isEditing: false,
+          }
+        : item
     );
+    setItems(updated);
+    syncSession(updated);
   };
 
   const handleCancelEdit = (id: string) => {
@@ -97,18 +128,22 @@ export default function ProcessPage() {
   };
 
   const handleDeleteItem = (id: string) => {
-    setItems(items.filter((item) => item.id !== id));
+    const updated = items.filter((item) => item.id !== id);
+    setItems(updated);
+    syncSession(updated);
   };
 
   const handleAddItem = () => {
-    const newItem: ReceiptItem = {
+    const newItem: Item = {
       id: Date.now().toString(),
       name: "Item Baru",
       price: 0,
       quantity: 1,
       isEditing: true,
     };
-    setItems([...items, newItem]);
+    const updated = [...items, newItem];
+    setItems(updated);
+    syncSession(updated);
   };
 
   const subtotal = items.reduce(
@@ -118,14 +153,24 @@ export default function ProcessPage() {
   const calculatedTotal = subtotal + tax + serviceCharge;
 
   const handleContinue = () => {
+    const subtotal = items.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0
+    );
     const storedTotal = sessionStorage.getItem("processedTotal");
-    const finalTotal = storedTotal ? Number(storedTotal) : calculatedTotal;
+    const finalTotal = storedTotal ? Number(storedTotal) : subtotal + tax;
 
     sessionStorage.setItem("processedItems", JSON.stringify(items));
     sessionStorage.setItem(
       "receiptTotals",
-      JSON.stringify({ subtotal, tax, serviceCharge, total: finalTotal })
+      JSON.stringify({
+        subtotal,
+        tax,
+        serviceCharge,
+        total: finalTotal,
+      })
     );
+
     router.push("/friends");
   };
 

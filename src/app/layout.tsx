@@ -1,11 +1,10 @@
 "use client";
 
-import type { Metadata } from "next";
-import { Nunito } from "next/font/google";
-import "./globals.css";
 import Footer from "@/components/footer";
 import Header from "@/components/header";
+import { Nunito } from "next/font/google";
 import { usePathname } from "next/navigation";
+import "./globals.css";
 
 const nunito = Nunito({
   variable: "--font-geist-sans",

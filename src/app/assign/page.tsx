@@ -13,10 +13,17 @@ const formatRupiah = (n: number) => {
 };
 
 export default function AssignItemsPage() {
-  const router = useRouter();
+ const router = useRouter();
 
   const [items, setItems] = useState<Item[]>([]);
   const [friends, setFriends] = useState<Friend[]>([]);
+  const [assignments, setAssignments] = useState<
+    Record<string, { friendId: string; quantity: number }[]>
+  >({});
+
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const [selectedFriendId, setSelectedFriendId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const storedItems = sessionStorage.getItem("processedItems");
@@ -36,14 +43,6 @@ export default function AssignItemsPage() {
     }
   }, []);
 
-  const [assignments, setAssignments] = useState<
-    Record<string, { friendId: string; quantity: number }[]>
-  >({});
-
-  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
-  const [selectedFriendId, setSelectedFriendId] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-
   const getAssignedQuantity = (itemId: string) =>
     (assignments[itemId] || []).reduce((s, a) => s + a.quantity, 0);
 
@@ -61,7 +60,6 @@ export default function AssignItemsPage() {
       setSelectedItemId(null);
       return;
     }
-
     assignToItem(itemId, selectedFriendId);
   };
 
@@ -103,7 +101,6 @@ export default function AssignItemsPage() {
     const parsedRaw = sessionStorage.getItem("parsed");
     let subtotal = 0;
     let pajak = 0;
-    let total = 0;
 
     setIsLoading(true);
 
@@ -111,8 +108,7 @@ export default function AssignItemsPage() {
       try {
         const parsed = JSON.parse(parsedRaw);
         subtotal = parsed.subtotal;
-        pajak = parsed.pajak;
-        total = subtotal + pajak;
+        pajak = parsed.pajak ?? 0; 
       } catch (err) {
         console.error("Error parsing parsed data:", err);
       }
@@ -121,7 +117,7 @@ export default function AssignItemsPage() {
         (sum, item) => sum + item.price * item.quantity,
         0
       );
-      total = subtotal;
+      pajak = 0;
     }
 
     const bills: Record<string, number> = {};
@@ -129,6 +125,8 @@ export default function AssignItemsPage() {
       id: string;
       name: string;
       image?: string;
+      color?: string;
+      initials?: string;
       items: { name: string; price: number; quantity: number }[];
     }[] = friends.map((f) => ({ ...f, items: [] }));
 
@@ -150,19 +148,35 @@ export default function AssignItemsPage() {
       });
     });
 
+    const pajakPerFriend = friends.length > 0 ? pajak / friends.length : 0;
+    friends.forEach((f) => {
+      bills[f.id] = (bills[f.id] || 0) + pajakPerFriend;
+    });
+
+    let finalTotal = subtotal + pajak;
+    finalTotal = Math.round(finalTotal / 1000) * 1000;
+
     sessionStorage.setItem(
       "summary",
-      JSON.stringify({ subtotal, pajak, total, bills, friends: friendDetails })
+      JSON.stringify({
+        subtotal,
+        pajak,
+        total: finalTotal,
+        bills,
+        friends: friendDetails,
+      })
     );
 
     try {
-      const res = await fetch("api/receipt", {
+      const res = await fetch("/api/receipt", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          total,
+          subtotal,
+          pajak, // selalu ada nilai
+          total: finalTotal,
           items: friendDetails,
         }),
       });
@@ -173,8 +187,10 @@ export default function AssignItemsPage() {
       console.log("Receipt tersimpan di Supabase:", data);
       router.push(`/receipt/${data.id}`);
     } catch (error) {
-      console.log(error);
+      console.error(error);
       alert("Terjadi kesalahan. Coba lagi.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
