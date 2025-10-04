@@ -13,6 +13,7 @@ import { useEffect, useState } from "react";
 
 export default function ProcessPage() {
   const router = useRouter();
+
   const [receiptImage, setReceiptImage] = useState<string | null>(null);
   const [receiptName, setReceiptName] = useState<string | null>(null);
   const [items, setItems] = useState<Item[]>([]);
@@ -20,21 +21,46 @@ export default function ProcessPage() {
   const [serviceCharge, setServiceCharge] = useState<number>(0);
   const [isProcessing, setIsProcessing] = useState(true);
 
-  const syncSession = (updatedItems: Item[]) => {
+  /**
+   * 🔄 Sinkronisasi semua data ke sessionStorage setiap kali item berubah
+   */
+  const syncSession = (
+    updatedItems: Item[],
+    updatedTax = tax,
+    updatedService = serviceCharge
+  ) => {
     const subtotal = updatedItems.reduce(
       (sum, it) => sum + it.price * it.quantity,
       0
     );
+    const total = subtotal + updatedTax + updatedService;
 
-    const total = subtotal + tax + serviceCharge;
+    // Data yang akan digunakan di semua halaman lain
+    const data = {
+      subtotal,
+      tax: updatedTax,
+      serviceCharge: updatedService,
+      total,
+    };
 
+    // Simpan semua key agar konsisten di semua page
     sessionStorage.setItem("processedItems", JSON.stringify(updatedItems));
+    sessionStorage.setItem("receiptTotals", JSON.stringify(data));
+    sessionStorage.setItem("processedTotal", total.toString());
     sessionStorage.setItem(
-      "receiptTotals",
-      JSON.stringify({ subtotal, tax, serviceCharge, total })
+      "parsed",
+      JSON.stringify({
+        items: updatedItems,
+        subtotal,
+        pajak: updatedTax,
+        total,
+      })
     );
   };
 
+  /**
+   * 📦 Ambil data awal dari sessionStorage
+   */
   useEffect(() => {
     const img = sessionStorage.getItem("uploadedReceipt");
     const name = sessionStorage.getItem("uploadedReceiptName");
@@ -63,7 +89,6 @@ export default function ProcessPage() {
         0
       );
 
-      // 🟢 Pastikan pajak ada
       const pajakNum = pajak ? Number(pajak) : 0;
       setTax(pajakNum);
       setServiceCharge(0);
@@ -72,17 +97,9 @@ export default function ProcessPage() {
         ? Number(totalFromLLM)
         : subtotalCalc + pajakNum;
 
-      sessionStorage.setItem("pajak", pajakNum.toString());
+      // Simpan hasil parsing awal
+      syncSession(formattedItems, pajakNum, 0);
       sessionStorage.setItem("processedTotal", totalCalc.toString());
-      sessionStorage.setItem(
-        "parsed",
-        JSON.stringify({
-          items: formattedItems,
-          subtotal: subtotalCalc,
-          pajak: pajakNum,
-          total: totalCalc,
-        })
-      );
     } catch (e) {
       console.error("Parsing items error:", e);
     }
@@ -90,11 +107,19 @@ export default function ProcessPage() {
     setIsProcessing(false);
   }, [router]);
 
+  /**
+   * 🧮 Update session storage setiap kali item, tax, atau service berubah
+   */
+  useEffect(() => {
+    if (!isProcessing) {
+      syncSession(items, tax, serviceCharge);
+    }
+  }, [items, tax, serviceCharge, isProcessing]);
+
+  // ✏️ Edit item
   const handleEditItem = (id: string) => {
-    setItems(
-      items.map((item) =>
-        item.id === id ? { ...item, isEditing: true } : item
-      )
+    setItems((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, isEditing: true } : item))
     );
   };
 
@@ -104,61 +129,58 @@ export default function ProcessPage() {
     newPrice: number,
     newQuantity: number
   ) => {
-    const updated = items.map((item) =>
-      item.id === id
-        ? {
-            ...item,
-            name: newName,
-            price: newPrice,
-            quantity: newQuantity,
-            isEditing: false,
-          }
-        : item
+    setItems((prev) =>
+      prev.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              name: newName,
+              price: newPrice,
+              quantity: newQuantity,
+              isEditing: false,
+            }
+          : item
+      )
     );
-    setItems(updated);
-    syncSession(updated);
   };
 
   const handleCancelEdit = (id: string) => {
-    setItems(
-      items.map((item) =>
+    setItems((prev) =>
+      prev.map((item) =>
         item.id === id ? { ...item, isEditing: false } : item
       )
     );
   };
 
   const handleDeleteItem = (id: string) => {
-    const updated = items.filter((item) => item.id !== id);
-    setItems(updated);
-    syncSession(updated);
+    setItems((prev) => prev.filter((item) => item.id !== id));
   };
 
   const handleAddItem = () => {
-    const newItem: Item = {
-      id: Date.now().toString(),
-      name: "Item Baru",
-      price: 0,
-      quantity: 1,
-      isEditing: true,
-    };
-    const updated = [...items, newItem];
-    setItems(updated);
-    syncSession(updated);
+    setItems((prev) => [
+      ...prev,
+      {
+        id: Date.now().toString(),
+        name: "Item Baru",
+        price: 0,
+        quantity: 1,
+        isEditing: true,
+      },
+    ]);
   };
 
+  // 🧾 Hitung subtotal dan total terbaru
   const subtotal = items.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0
   );
   const calculatedTotal = subtotal + tax + serviceCharge;
 
+  /**
+   * 🚀 Lanjut ke halaman berikutnya
+   */
   const handleContinue = () => {
-    const subtotal = items.reduce(
-      (sum, item) => sum + item.price * item.quantity,
-      0
-    );
-    const storedTotal = sessionStorage.getItem("processedTotal");
-    const finalTotal = storedTotal ? Number(storedTotal) : subtotal + tax;
+    const finalTotal = calculatedTotal;
 
     sessionStorage.setItem("processedItems", JSON.stringify(items));
     sessionStorage.setItem(
@@ -167,6 +189,16 @@ export default function ProcessPage() {
         subtotal,
         tax,
         serviceCharge,
+        total: finalTotal,
+      })
+    );
+    sessionStorage.setItem("processedTotal", finalTotal.toString());
+    sessionStorage.setItem(
+      "parsed",
+      JSON.stringify({
+        items,
+        subtotal,
+        pajak: tax,
         total: finalTotal,
       })
     );
