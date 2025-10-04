@@ -53,7 +53,7 @@ Aturan umum:
     let parsed: IProcess = { items: [], subtotal: 0, pajak: 0, total: 0 };
 
     try {
-      let cleaned = raw
+      const cleaned = raw
         .replace(/^```json\s*/i, "")
         .replace(/^```/i, "")
         .replace(/```$/i, "");
